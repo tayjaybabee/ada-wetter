@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/tech/inspyre/wetter">
+    <file preprocess="xml-stripblanks">ui/wetter_main.ui</file>
+  </gresource>
+</gresources>
