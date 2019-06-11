@@ -17,19 +17,23 @@
   <object class="GtkTextBuffer" id="BuffTempSensor">
     <property name="text" translatable="yes">0</property>
   </object>
-  <template class="WetterApplicationWindow" parent="GtkApplicationWindow">
+  <object class="GtkApplicationWindow" id="WetterApplicationWindow">
     <property name="can_focus">False</property>
-    <child>
+    <property name="resizable">False</property>
+    <property name="window_position">center</property>
+    <property name="icon_name">weather-clear</property>
+    <property name="gravity">center</property>
+    <child type="titlebar">
       <placeholder/>
     </child>
     <child>
-      <object class="GtkBox" id="mainBox">
+      <object class="GtkBox" id="MainBox">
         <property name="visible">True</property>
         <property name="can_focus">False</property>
         <property name="orientation">vertical</property>
         <property name="spacing">3</property>
         <child>
-          <object class="GtkGrid" id="gridSensorReadout">
+          <object class="GtkGrid" id="GridSensorReadout">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
@@ -171,14 +175,14 @@
           </packing>
         </child>
         <child>
-          <object class="GtkImage" id="weatherImage">
+          <object class="GtkImage" id="WeatherImage">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">center</property>
             <property name="valign">center</property>
             <property name="hexpand">True</property>
             <property name="vexpand">True</property>
-            <property name="pixbuf">ui/resources/stormy.gif</property>
+            <property name="pixbuf">../../../eve-wetter/application/ui/resources/media/animations/stormy.gif</property>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -346,9 +350,10 @@
             <property name="can_focus">False</property>
             <property name="halign">center</property>
             <property name="valign">baseline</property>
-            <property name="layout_style">start</property>
+            <property name="spacing">4</property>
+            <property name="layout_style">expand</property>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="ButtonPrefs">
                 <property name="label">gtk-preferences</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -360,23 +365,27 @@
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">0</property>
+                <property name="non_homogeneous">True</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
-                <property name="label" translatable="yes">Refresh</property>
+              <object class="GtkButton" id="ButtonRefresh">
+                <property name="label">gtk-refresh</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+                <property name="always_show_image">True</property>
               </object>
               <packing>
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">1</property>
+                <property name="non_homogeneous">True</property>
               </packing>
             </child>
             <child>
-              <object class="GtkButton">
+              <object class="GtkButton" id="ButtonQuit">
                 <property name="label">gtk-quit</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -388,6 +397,7 @@
                 <property name="expand">True</property>
                 <property name="fill">True</property>
                 <property name="position">2</property>
+                <property name="non_homogeneous">True</property>
               </packing>
             </child>
           </object>
@@ -399,7 +409,7 @@
         </child>
       </object>
     </child>
-  </template>
+  </object>
   <object class="GtkTextBuffer" id="BuffTempStation">
     <property name="text" translatable="yes">0</property>
   </object>

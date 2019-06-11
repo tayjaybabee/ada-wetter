@@ -2,8 +2,24 @@
 
 require 'gtk3'
 
-builder_file = 'wetter_main.glade'
+class Wetter
 
-builder = Gtk::Builder.new(:file => builder_file)
+  def initialize(glade_path)
+    @builder = Gtk::Builder.new
+    @builder.add_from_file(glade_path)
+    @builder.connect_signals { |handler| method (handler) }
+    @main_window = @builder.get_object('WetterApplicationWindow')
+  end
 
-window = builder.get_object('WetterApplicationWindow')
+  def run
+    @main_window.show
+    Gtk.main
+  end
+
+  def quit
+    Gtk.main_quit
+  end
+
+end
+
+Wetter.new('wetter.ui').run

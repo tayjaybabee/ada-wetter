@@ -33,7 +33,7 @@
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkLabel" id="LabelTempSensor">
+              <object class="GtkLabel" id="labelTempSensor">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="tooltip_text" translatable="yes">The temperature as read by the AiDA sensePod</property>
@@ -46,7 +46,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="LabelHumSensor">
+              <object class="GtkLabel" id="labelHumSensor">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Rel. Hum.</property>
@@ -58,7 +58,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="LabelPressureSensor">
+              <object class="GtkLabel" id="labelPressureSensor">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Bar. Pressure</property>
@@ -187,11 +187,11 @@
           </packing>
         </child>
         <child>
-          <object class="GtkGrid" id="GridStationReadout">
+          <object class="GtkGrid" id="gridStationReadout">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <child>
-              <object class="GtkLabel" id="LabelTempStation">
+              <object class="GtkLabel" id="labelTempStation">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Temperature</property>
@@ -203,7 +203,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="LabelHumStation">
+              <object class="GtkLabel" id="labelHumStation">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Rel. Hum.</property>
@@ -215,7 +215,7 @@
               </packing>
             </child>
             <child>
-              <object class="GtkLabel" id="LabelPressureStation">
+              <object class="GtkLabel" id="labelPressureStation">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Bar. Pressure</property>
@@ -328,7 +328,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkSeparator" id="HSepButtonBox">
+          <object class="GtkSeparator">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="hexpand">True</property>
@@ -341,7 +341,7 @@
           </packing>
         </child>
         <child>
-          <object class="GtkButtonBox" id="MainButtonBox">
+          <object class="GtkButtonBox">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="halign">center</property>
