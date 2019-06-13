@@ -1,14 +1,89 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 
 require 'gtk3'
+require 'logger'
 
 class Wetter
 
   def initialize(glade_path)
-    @builder = Gtk::Builder.new
+    @logger       = Logger.new(STDOUT)
+    @logger.level = Logger::DEBUG
+    @builder      = Gtk::Builder.new
     @builder.add_from_file(glade_path)
     @builder.connect_signals { |handler| method (handler) }
     @main_window = @builder.get_object('WetterApplicationWindow')
+
+    @prefs_window = @builder.get_object('PrefWindow')
+
+    @api_buffer = @builder.get_object('ApiKeyEntryBuffer')
+
+    @api_show = @builder.get_object('ApiKeyEntry')
+
+    @settings = { api_key:  '',
+                  location: '' }
+
+    if File.exist?('conf/wetter.conf')
+      file      = 'conf/wetter.conf'
+      @settings = YAML.parse_file(file)
+    else
+      @settings = { api_key:  '',
+                    location: '' }
+    end
+  end
+
+
+  def not_yet_implemented
+    puts 'Not yet implemented'
+  end
+
+  def on_ButtonPrefs_clicked
+    @logger.debug('Received click signal on Preferences button')
+    @api_buffer.text = if @settings[:api_key] != ''
+                         @settings[:api_key]
+                       else
+                         'This has not been set'
+                       end
+    @logger.debug("API Key is: #{@api_buffer.text}")
+    @prefs_window.show
+    @api_show.text = (@api_buffer.text)
+  end
+
+  def on_ButtonRefresh_clicked
+    not_yet_implemented
+  end
+
+  def on_ButtonQuit_clicked
+    @main_window.destroy
+    begin
+      exit
+    rescue SystemExit
+      p 'This is a clean exit'
+      quit
+    end
+  end
+
+  # Handlers for Preferences window signals
+  def on_PrefsWinButtonOk_clicked
+    @logger.debug('Received click on OK button in preferences window')
+    begin
+      @logger.debug('Opening file in write mode')
+      File.open('conf/settings.conf', 'w') do |file|
+        @logger.debug('Writing settings file...')
+        file.write array_of_hashes.to_yaml
+        @logger.debug('File written')
+      end
+    rescue StandardError => e
+      @logger.error 'I do not have permission to save settings:'
+      @logger.error e.message
+
+    end
+  end
+
+  def on_PrefsWinButtonCancel_clicked
+    @logger.debug('Received click on cancel button, hiding window')
+    @prefs_window.hide
+    @logger.debug('Preference window hidden')
   end
 
   def run
@@ -19,7 +94,6 @@ class Wetter
   def quit
     Gtk.main_quit
   end
-
 end
 
 Wetter.new('wetter.ui').run
