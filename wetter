@@ -101,10 +101,10 @@ class Wetter
     @splash.hide
   end
 
-  def show_splash
-    @splash = @builder.get_object('splash_window')
-    @splash.show
-  end
+#  def show_splash
+#    @splash = @builder.get_object('splash_window')
+#    @splash.show
+#0  end
 
   def initialize(glade_path)
 
@@ -112,7 +112,7 @@ class Wetter
     start_logger
     @logger.debug 'Running start jobs'
     start_builder(glade_path)
-    show_splash
+  #  show_splash
     @logger.debug 'Starting build job for windows'
     build_windows
 
