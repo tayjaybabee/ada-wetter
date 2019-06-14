@@ -20,7 +20,13 @@
     <property name="text" translatable="yes">0</property>
   </object>
   <object class="GtkApplicationWindow" id="WetterApplicationWindow">
-    <property name="can_focus">False</property>
+    <property name="visible">True</property>
+    <property name="can_focus">True</property>
+    <property name="has_focus">True</property>
+    <property name="is_focus">True</property>
+    <property name="can_default">True</property>
+    <property name="has_default">True</property>
+    <property name="has_tooltip">True</property>
     <property name="resizable">False</property>
     <property name="window_position">center</property>
     <property name="icon_name">weather-clear</property>
@@ -181,7 +187,7 @@
             <property name="valign">center</property>
             <property name="hexpand">True</property>
             <property name="vexpand">True</property>
-            <property name="pixbuf">../../../eve-wetter/application/ui/resources/media/animations/stormy.gif</property>
+            <property name="pixbuf">stormy.gif</property>
           </object>
           <packing>
             <property name="expand">True</property>
@@ -423,24 +429,25 @@
     <property name="can_focus">True</property>
     <property name="no_show_all">True</property>
     <property name="type">popup</property>
+    <property name="title" translatable="yes">wetter Preferences</property>
     <property name="modal">True</property>
     <property name="window_position">center</property>
     <property name="destroy_with_parent">True</property>
+    <property name="icon_name">preferences-other</property>
     <child>
       <object class="GtkBox" id="PrefBox">
-        <property name="visible">True</property>
-        <property name="can_focus">False</property>
+        <property name="can_focus">True</property>
+        <property name="has_focus">True</property>
+        <property name="is_focus">True</property>
         <property name="orientation">vertical</property>
         <property name="spacing">6</property>
         <child>
           <object class="GtkGrid" id="PrefGrid">
-            <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="row_spacing">28</property>
             <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkLabel" id="LabelApiKeyEntry">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">API Key:</property>
                 <attributes>
@@ -454,7 +461,6 @@
             </child>
             <child>
               <object class="GtkLabel" id="LabelLocationEntry">
-                <property name="visible">True</property>
                 <property name="can_focus">False</property>
                 <property name="label" translatable="yes">Location:</property>
                 <attributes>
@@ -469,9 +475,9 @@
             <child>
               <object class="GtkEntry" id="ApiKeyEntry">
                 <property name="name">ApiKeyEntry</property>
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="overwrite_mode">True</property>
+                <signal name="changed" handler="on_ApiKeyEntry_changed" swapped="no"/>
               </object>
               <packing>
                 <property name="left_attach">1</property>
@@ -481,7 +487,6 @@
             <child>
               <object class="GtkEntry" id="LocationEntry">
                 <property name="name">LocationEntry</property>
-                <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="overwrite_mode">True</property>
               </object>
@@ -499,7 +504,6 @@
         </child>
         <child>
           <object class="GtkButtonBox" id="PrefWinButtonBox">
-            <property name="visible">True</property>
             <property name="can_focus">False</property>
             <property name="layout_style">spread</property>
             <child>
@@ -539,18 +543,34 @@
         </child>
       </object>
     </child>
-    <child type="titlebar">
-      <placeholder/>
+  </object>
+  <object class="GtkAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkAdjustment">
+    <property name="upper">100</property>
+    <property name="step_increment">1</property>
+    <property name="page_increment">10</property>
+  </object>
+  <object class="GtkWindow" id="splash_window">
+    <property name="can_focus">False</property>
+    <property name="resizable">False</property>
+    <property name="modal">True</property>
+    <property name="window_position">center</property>
+    <property name="type_hint">splashscreen</property>
+    <property name="focus_on_map">False</property>
+    <property name="decorated">False</property>
+    <property name="deletable">False</property>
+    <property name="gravity">center</property>
+    <child>
+      <object class="GtkImage" id="splash_image">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="has_focus">True</property>
+        <property name="pixbuf">splash.png</property>
+      </object>
     </child>
-  </object>
-  <object class="GtkAdjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
-  </object>
-  <object class="GtkAdjustment">
-    <property name="upper">100</property>
-    <property name="step_increment">1</property>
-    <property name="page_increment">10</property>
   </object>
 </interface>

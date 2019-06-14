@@ -3,47 +3,144 @@
 
 require 'gtk3'
 require 'logger'
+require 'yaml'
+require 'fileutils'
 
 class Wetter
 
-  def initialize(glade_path)
-    @logger       = Logger.new(STDOUT)
-    @logger.level = Logger::DEBUG
-    @builder      = Gtk::Builder.new
-    @builder.add_from_file(glade_path)
-    @builder.connect_signals { |handler| method (handler) }
-    @main_window = @builder.get_object('WetterApplicationWindow')
+  @settings_filepath = 'conf/wetter.conf'
 
-    @prefs_window = @builder.get_object('PrefWindow')
+  @temp_set_struct = {
+      api_key:     nil,
+      location:    nil,
+      conf_path:   'conf/wetter.conf',
+      backup_path: ''
+  }
 
-    @api_buffer = @builder.get_object('ApiKeyEntryBuffer')
+  @temp_sys_stats_struct = {
+      working_dir: nil,
+      last_backup: nil,
+      backup_path: 'backups/'
+  }
 
-    @api_show = @builder.get_object('ApiKeyEntry')
+  def load_settings
 
-    @settings = { api_key:  '',
-                  location: '' }
-
-    if File.exist?('conf/wetter.conf')
-      file      = 'conf/wetter.conf'
-      @settings = YAML.parse_file(file)
-    else
-      @settings = { api_key:  '',
-                    location: '' }
+    unless @settings
+      @settings = {
+          api_key:  nil,
+          location: nil,
+      }
     end
+
+    if File.exist?(@settings_filepath)
+      temp_settings = YAML.load_file(@settings_filepath)
+      if temp_settings.key?(:api_key)
+        if temp_settings[:api_key].nil?
+          @logger.debug 'API key unset, though it has an entry'
+          @api_buffer.text = 'Not set'
+        else
+          @logger.info "Found API key: #{temp_settings[:api_key]}"
+          @api_buffer.text = temp_settings[:api_key].to_s
+        end
+      else
+      end
+
+    end
+
+
+    settings_yaml = YAML.load_file(settings_file)
+    if settings_yaml.has_key?(:api_key)
+      @settings[:api_key] = settings_yaml[:api_key].to_s
+    else
+      @settings[:api_key] = nil
+    end
+
   end
 
+  def save_settings
+    settings_file = File.new @settings_filepath, 'w+'
+    settings_yaml = YAML.load_file(settings_file)
+    if settings_yaml.has_key?(:api_key)
+      @settings[:api_key] = settings_yaml[:api_key].to_s
+    else
+      @settings[:api_key] = nil
+    end
+
+    if settings_yaml.has_key?(:location)
+      @settings[:location] = settings_yaml[:location].to_s
+    else
+      @settings[:location] = nil
+    end
+    settings_file.write @settings
+  end
+
+  def start_logger
+    @logger       = Logger.new(STDOUT)
+    @logger.level = Logger::DEBUG
+    @logger.info 'Logger started!'
+  end
+
+  def start_builder(glade_path)
+    @builder = Gtk::Builder.new
+    @logger.debug 'Starting UI builder object'
+    @builder.add_from_file(glade_path)
+    @logger.debug 'Setting up connect signals with handlers'
+    @builder.connect_signals { |handler| method (handler) }
+    @logger.debug 'Signals connected!'
+    @logger.debug 'UI builder started!'
+  end
+
+  def build_windows
+    @logger.debug 'Building window objects'
+    @main_window  = @builder.get_object('WetterApplicationWindow')
+    @prefs_window = @builder.get_object('PrefWindow')
+    @logger.debug 'Window objects built'
+  end
+
+  def splash_hide
+    @splash.hide
+  end
+
+  def show_splash
+    @splash = @builder.get_object('splash_window')
+    @splash.show
+  end
+
+  def initialize(glade_path)
+
+    # Run start-up jobs
+    start_logger
+    @logger.debug 'Running start jobs'
+    start_builder(glade_path)
+    show_splash
+    @logger.debug 'Starting build job for windows'
+    build_windows
+
+  end
+
+  def build_pref_fields
+    @logger.debug 'Building Preference Fields'
+    @api_buffer = @builder.get_object 'ApiKeyEntryBuffer'
+    @api_show   = @builder.get_object 'ApiKeyEntry'
+    @logger.debug 'Built API preference fields'
+  end
 
   def not_yet_implemented
     puts 'Not yet implemented'
   end
 
   def on_ButtonPrefs_clicked
-    @logger.debug('Received click signal on Preferences button')
-    @api_buffer.text = if @settings[:api_key] != ''
+    @logger.debug 'Received click on Preferences button'
+    build_pref_fields
+    @api_buffer.text = if !@settings[:api_key].nil?
                          @settings[:api_key]
                        else
                          'This has not been set'
                        end
+    if @settings[:api_key].nil?
+      ''
+    end
+
     @logger.debug("API Key is: #{@api_buffer.text}")
     @prefs_window.show
     @api_show.text = (@api_buffer.text)
@@ -51,6 +148,11 @@ class Wetter
 
   def on_ButtonRefresh_clicked
     not_yet_implemented
+  end
+
+  def on_ApiKeyEntry_changed
+    @api_buffer.text    = (@api_show.text)
+    @settings[:api_key] = @api_buffer.text
   end
 
   def on_ButtonQuit_clicked
@@ -66,11 +168,12 @@ class Wetter
   # Handlers for Preferences window signals
   def on_PrefsWinButtonOk_clicked
     @logger.debug('Received click on OK button in preferences window')
+    @logger.debug("Settings state: #{@settings}")
     begin
       @logger.debug('Opening file in write mode')
       File.open('conf/settings.conf', 'w') do |file|
         @logger.debug('Writing settings file...')
-        file.write array_of_hashes.to_yaml
+        file.write @settings.to_yaml
         @logger.debug('File written')
       end
     rescue StandardError => e
