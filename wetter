@@ -10,7 +10,7 @@ require 'optparse'
 #   future end-users and current developers
 require_relative 'prefs.rb'
 
-# wetter is an applet that is meant to serve as part of the AiDA system
+# wetter is an applet that is meant to serve as part of the ADA system
 # (Artificially-Intelligent Domestic Assistant) prounounced "Ay-Duh"
 
 class Wetter
@@ -34,20 +34,22 @@ class Wetter
   def create_yaml(mkdir = true)
     @logger.debug 'Received call to make conf file'
 
-    conf_filepath  = DefaultFilepath
     stats_filepath = StatsDir
     conf_filepath  = ConfDir
     if mkdir
+
       @logger.debug 'Making conf directory'
       FileUtils.mkpath(conf_filepath)
       @logger.debug 'Conf path created'
+
       @logger.debug 'Creating conf file'
       @logger.debug 'Fetching default settings struct'
       temp_settings = Prefs::TempStructs.settings
-      stat_settings = Prefs::TempStructs.stacks
       @logger.debug "Found default settings struct: #{temp_settings}"
-      write_yaml(temp_settings)
-      write_yaml(stat_settings)
+      write_yaml('conf', temp_settings)
+      stat_settings = Prefs::TempStructs.stats
+      @logger.debug("Found default stats struct: #{stat_settings}")
+      write_yaml('stats', stat_settings)
       @logger.debug 'Creating stats path'
       FileUtils.mkpath("#{stats_filepath}")
       @logger.debug 'Stats path created!'
@@ -60,9 +62,24 @@ class Wetter
   end
 
   def load_settings(filepath = DefaultFilepath)
-    puts filepath.to_s
+    settings_filepath = "#{ConfDir}settings.conf"
+    @logger.debug 'Received load_settings call'
+    @logger.debug "Searching #{filepath.to_s}"
 
     if File.exist?(filepath) && File.directory?(filepath)
+      @logger.debug "Determined that #{filepath.to_s} is an existing directory"
+      @logger.debug 'Seeing if settings file exists'
+      if File.exist?(settings_filepath)
+        @logger.debug("Found #{settings_filepath}")
+        @logger.debug('Loading configuration file')
+        @settings = YAML.load_file(settings_filepath)
+        write_yaml('conf', @settings)
+      else
+        @logger.debug("Unable to find #{settings_filepath}, calling creation job")
+        create_yaml(settings_filepath)
+      end
+    else
+      @logger.debug('Could not find paths needed for configuration')
       unless File.exist?("#{filepath}conf/settings.conf")
         create_yaml("#{filepath}conf/settings.conf")
       end
@@ -71,34 +88,14 @@ class Wetter
       end
       @settings = YAML.load_file("#{filepath}conf/settings.conf")
     end
-
-    @logger.debug "Checking to see if #{filepath} exists and is a directory"
-    if File.exist?(filepath) && File.directory?
-      conf_file = "#{filepath}/wetter.conf"
-      @logger.debug "Both are true, seeing if #{conf_file} exists"
-      if File.exist(conf_file)
-        @logger.debug 'Conf file found, parsing'
-        loaded_settings = YAML.load_file(conf_file).read
-        if loaded_settings == temp_struct
-          @logger.debug 'Found default conf struct in conf file, loading'
-          loaded_settings = temp_struct
-          @logger.debug "Loaded settings as: #{loaded_settings}"
-          save_settings(loaded_settings)
-        else
-          if loaded_settings.key?[:api_key] and loaded_settings.key?[:location]
-            @logger.debug 'Found API Key and Location fields'
-            for item in loaded_settings
-
-            end
-          end
-        end
-      end
-    end
     if File.exist?("#{filepath}/wetter.conf")
     end
 
-    if File.exist?(filepath)
-      temp_settings = YAML.load_file(filepath)
+    if File.exist?(settings_filepath)
+      temp_settings = YAML.load_file(settings_filepath)
+      if temp_settings.nil?
+
+      end
       if temp_settings.key?(:api_key)
         if temp_settings[:api_key].nil?
           @logger.debug 'API key unset, though it has an entry'
@@ -116,21 +113,21 @@ class Wetter
 
   end
 
-  def save_settings
-    settings_file = File.new @settings_filepath, 'w+'
-    settings_yaml = YAML.load_file(settings_file)
-    if settings_yaml.has_key?(:api_key)
-      @settings[:api_key] = settings_yaml[:api_key].to_s
-    else
-      @settings[:api_key] = nil
-    end
+  def write_yaml(file, settings)
+    @logger.debug 'YAML writer received call to write'
+    case file
 
-    if settings_yaml.has_key?(:location)
-      @settings[:location] = settings_yaml[:location].to_s
-    else
-      @settings[:location] = nil
+    when 'conf'
+      @logger.debug 'Saving configuration file'
+      w_file = "#{ConfDir}settings.conf"
+      data   = settings
+
+    when 'stats'
+      @logger.debug 'Saving stats file'
+      w_file = "#{StatsDir}stats.db"
+      data   = settings
     end
-    settings_file.write @settings
+    File.open("#{w_file}", 'w+') { |f| f.write(data.to_yaml) }
   end
 
   def start_logger
@@ -168,16 +165,38 @@ class Wetter
   def initialize(glade_path)
 
     # Run start-up jobs
+    # First we start the logger
+    # TODO Add switches for setting the logging level via command line
+    #  and maybe even via the preferences window
     start_logger
+
+    # Now we can tell the user that we're starting start jobs
+
     @logger.debug 'Running start jobs'
-    load_settings
+
+    # Starting the builders for the main window and for the
+    # preferences window.
+
+    @logger.debug 'Starting builder for main application window'
     start_builder(glade_path)
+    @logger.debug 'Starting builder for preference fields'
+    build_pref_fields
+
+    # Now that the preference fields exist for filling we'll give
+    # them the data that is currently saved.
+    load_settings
+
   #  show_splash
+
+    # Build the windows needed for the application
     @logger.debug 'Starting build job for windows'
     build_windows
 
   end
 
+  # This function will build the preference fields that are placed in
+  # the preferences window so they can be filled with data from the conf
+  # files (if they exist)
   def build_pref_fields
     @logger.debug 'Building Preference Fields'
     @api_buffer = @builder.get_object 'ApiKeyEntryBuffer'
@@ -185,13 +204,21 @@ class Wetter
     @logger.debug 'Built API preference fields'
   end
 
+  # This function will be removed/commented out soon, it just exists in
+  # an effort to give all signal-bearing objects a function to call to show
+  # that the signals work for development
+
+  # TODO Remove this function
   def not_yet_implemented
     puts 'Not yet implemented'
   end
 
+  # When we receive a signal that the end-user clicked the preferences button
+  # we will create and show the preferences window
   def on_ButtonPrefs_clicked
     @logger.debug 'Received click on Preferences button'
-    puts @settings
+    @logger.debug "Current program settings are: #{@settings}"
+    @logger.debug 'Calling on preference field builder'
     build_pref_fields
     @api_buffer.text = if !@settings[:api_key].nil?
                          @settings[:api_key]
@@ -207,21 +234,34 @@ class Wetter
     @api_show.text = (@api_buffer.text)
   end
 
+  # When we receive a signal that the end-user clicked the refresh button
+  # we deliver a message advising them that this function is not-yet
+  # implemented
+
+  # TODO Provide function to the refresh button
+
   def on_ButtonRefresh_clicked
     not_yet_implemented
   end
+
+  # When we receive a signal that the API Key text entry field was changed
+  # we want to save that information to the @settings hash.
 
   def on_ApiKeyEntry_changed
     @api_buffer.text    = (@api_show.text)
     @settings[:api_key] = @api_buffer.text
   end
 
+  # When we receive a signal that the quit button was pressed we'll want to
+  # destroy the main window and exit the program in a safe and clean way,
+  # hopefully returning no exceptions or error codes
+
   def on_ButtonQuit_clicked
     @main_window.destroy
     begin
       exit
     rescue SystemExit
-      p 'This is a clean exit'
+      p 'This is a clean exit' # FIXME Change or get rid of this message
       quit
     end
   end
@@ -245,20 +285,32 @@ class Wetter
     end
   end
 
+  # When we receive a signal that the end-user clicked the cancel button from
+  # within the preferences window we will hide the preferences window until
+  # program end, or until called again by the user
+
   def on_PrefsWinButtonCancel_clicked
     @logger.debug('Received click on cancel button, hiding window')
     @prefs_window.hide
     @logger.debug('Preference window hidden')
   end
 
+  # Main run function
+
   def run
     @main_window.show
     Gtk.main
   end
 
+  # Main quit function, this is called upon by the quit button and the X button
+  # at the top of the window
+
   def quit
     Gtk.main_quit
   end
 end
-puts "#{ARGV}"
+
+# Start a new instance of the Wetter application by calling on the run function
+# above.
+#
 Wetter.new('wetter.ui').run

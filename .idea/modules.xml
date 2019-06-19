@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/eve-wetter.iml" filepath="$PROJECT_DIR$/.idea/eve-wetter.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../ada-wetter/.idea/ada-wetter.iml" filepath="$PROJECT_DIR$/../ada-wetter/.idea/ada-wetter.iml" />
     </modules>
   </component>
 </project>
