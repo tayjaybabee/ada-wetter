@@ -1,316 +1,130 @@
 #!/usr/bin/env ruby
-# frozen_string_literal: true
 
-require 'gtk3'
-require 'logger'
-require 'yaml'
-require 'fileutils'
-require 'optparse'
-# TODO Write out a comp[ete set of required gems to go on the Github for
-#   future end-users and current developers
-require_relative 'prefs.rb'
+require 'rubygems'
+require 'commander/import'
 
-# wetter is an applet that is meant to serve as part of the ADA system
-# (Artificially-Intelligent Domestic Assistant) prounounced "Ay-Duh"
+program :name, 'ada-wetter'
+program :version, '0.0.1'
+program :description, 'Delivers weather related data'
 
-class Wetter
-  include Wetter::Prefs::Window
-
-  # Create constant representing the Preferences window-builder object
-  # for if user clicks
-
-  PrefsWin = Wetter::Prefs::Window.builder
-
-  # Declare some much needed instance constants
-
-  DefaultFilepath = 'application/run/' # Base run dir where both settings.conf
-  # and stats.db will have their respective
-  # domains.
-  ConfDir  = "#{DefaultFilepath}conf/" # Dir containing settings.conf
-  StatsDir = "#{DefaultFilepath}stats/" # Dir containing stats.conf
-
-  # TODO Add argument parsing
-
-  def create_yaml(mkdir = true)
-    @logger.debug 'Received call to make conf file'
-
-    stats_filepath = StatsDir
-    conf_filepath  = ConfDir
-    if mkdir
-
-      @logger.debug 'Making conf directory'
-      FileUtils.mkpath(conf_filepath)
-      @logger.debug 'Conf path created'
-
-      @logger.debug 'Creating conf file'
-      @logger.debug 'Fetching default settings struct'
-      temp_settings = Prefs::TempStructs.settings
-      @logger.debug "Found default settings struct: #{temp_settings}"
-      write_yaml('conf', temp_settings)
-      stat_settings = Prefs::TempStructs.stats
-      @logger.debug("Found default stats struct: #{stat_settings}")
-      write_yaml('stats', stat_settings)
-      @logger.debug 'Creating stats path'
-      FileUtils.mkpath("#{stats_filepath}")
-      @logger.debug 'Stats path created!'
-      @logger.debug 'Initial conf/stats files created!'
-    else
-      @logger.debug 'Skipping file creation, files found!'
-
-    end
-
-  end
-
-  def load_settings(filepath = DefaultFilepath)
-    settings_filepath = "#{ConfDir}settings.conf"
-    @logger.debug 'Received load_settings call'
-    @logger.debug "Searching #{filepath.to_s}"
-
-    if File.exist?(filepath) && File.directory?(filepath)
-      @logger.debug "Determined that #{filepath.to_s} is an existing directory"
-      @logger.debug 'Seeing if settings file exists'
-      if File.exist?(settings_filepath)
-        @logger.debug("Found #{settings_filepath}")
-        @logger.debug('Loading configuration file')
-        @settings = YAML.load_file(settings_filepath)
-        write_yaml('conf', @settings)
-      else
-        @logger.debug("Unable to find #{settings_filepath}, calling creation job")
-        create_yaml(settings_filepath)
-      end
-    else
-      @logger.debug('Could not find paths needed for configuration')
-      unless File.exist?("#{filepath}conf/settings.conf")
-        create_yaml("#{filepath}conf/settings.conf")
-      end
-      unless File.exist?("#{filepath}stats/stats.db")
-        create_yaml("#{filepath}stats/stats.db")
-      end
-      @settings = YAML.load_file("#{filepath}conf/settings.conf")
-    end
-    if File.exist?("#{filepath}/wetter.conf")
-    end
-
-    if File.exist?(settings_filepath)
-      temp_settings = YAML.load_file(settings_filepath)
-      if temp_settings.nil?
-
-      end
-      if temp_settings.key?(:api_key)
-        if temp_settings[:api_key].nil?
-          @logger.debug 'API key unset, though it has an entry'
-          @api_buffer.text = 'Not set'
-        else
-          @logger.info "Found API key: #{temp_settings[:api_key]}"
-          @api_buffer.text = temp_settings[:api_key].to_s
-        end
-      else
-        @logger.info 'Unable to find conf path, creating...'
-        create_conf
-      end
-
-    end
-
-  end
-
-  def write_yaml(file, settings)
-    @logger.debug 'YAML writer received call to write'
-    case file
-
-    when 'conf'
-      @logger.debug 'Saving configuration file'
-      w_file = "#{ConfDir}settings.conf"
-      data   = settings
-
-    when 'stats'
-      @logger.debug 'Saving stats file'
-      w_file = "#{StatsDir}stats.db"
-      data   = settings
-    end
-    File.open("#{w_file}", 'w+') { |f| f.write(data.to_yaml) }
-  end
-
-  def start_logger
-    @logger       = Logger.new(STDOUT)
-    @logger.level = Logger::DEBUG
-    @logger.info 'Logger started!'
-  end
-
-  def start_builder(glade_path)
-    @builder = Gtk::Builder.new
-    @logger.debug 'Starting UI builder object'
-    @builder.add_from_file(glade_path)
-    @logger.debug 'Setting up connect signals with handlers'
-    @builder.connect_signals { |handler| method (handler) }
-    @logger.debug 'Signals connected!'
-    @logger.debug 'UI builder started!'
-  end
-
-  def build_windows
-    @logger.debug 'Building window objects'
-    @main_window  = @builder.get_object('WetterApplicationWindow')
-    @prefs_window = @builder.get_object('PrefWindow')
-    @logger.debug 'Window objects built'
-  end
-
-  def splash_hide
-    @splash.hide
-  end
-
-  #  def show_splash
-  #    @splash = @builder.get_object('splash_window')
-  #    @splash.show
-  #0  end
-
-  def initialize(glade_path)
-
-    # Run start-up jobs
-    # First we start the logger
-    # TODO Add switches for setting the logging level via command line
-    #  and maybe even via the preferences window
-    start_logger
-
-    # Now we can tell the user that we're starting start jobs
-
-    @logger.debug 'Running start jobs'
-
-    # Starting the builders for the main window and for the
-    # preferences window.
-
-    @logger.debug 'Starting builder for main application window'
-    start_builder(glade_path)
-    @logger.debug 'Starting builder for preference fields'
-    build_pref_fields
-
-    # Now that the preference fields exist for filling we'll give
-    # them the data that is currently saved.
-    load_settings
-
-  #  show_splash
-
-    # Build the windows needed for the application
-    @logger.debug 'Starting build job for windows'
-    build_windows
-
-  end
-
-  # This function will build the preference fields that are placed in
-  # the preferences window so they can be filled with data from the conf
-  # files (if they exist)
-  def build_pref_fields
-    @logger.debug 'Building Preference Fields'
-    @api_buffer = @builder.get_object 'ApiKeyEntryBuffer'
-    @api_show   = @builder.get_object 'ApiKeyEntry'
-    @logger.debug 'Built API preference fields'
-  end
-
-  # This function will be removed/commented out soon, it just exists in
-  # an effort to give all signal-bearing objects a function to call to show
-  # that the signals work for development
-
-  # TODO Remove this function
-  def not_yet_implemented
-    puts 'Not yet implemented'
-  end
-
-  # When we receive a signal that the end-user clicked the preferences button
-  # we will create and show the preferences window
-  def on_ButtonPrefs_clicked
-    @logger.debug 'Received click on Preferences button'
-    @logger.debug "Current program settings are: #{@settings}"
-    @logger.debug 'Calling on preference field builder'
-    build_pref_fields
-    @api_buffer.text = if !@settings[:api_key].nil?
-                         @settings[:api_key]
-                       else
-                         'This has not been set'
-                       end
-    if @settings[:api_key].nil?
-      ''
-    end
-
-    @logger.debug("API Key is: #{@api_buffer.text}")
-    @prefs_window.show
-    @api_show.text = (@api_buffer.text)
-  end
-
-  # When we receive a signal that the end-user clicked the refresh button
-  # we deliver a message advising them that this function is not-yet
-  # implemented
-
-  # TODO Provide function to the refresh button
-
-  def on_ButtonRefresh_clicked
-    not_yet_implemented
-  end
-
-  # When we receive a signal that the API Key text entry field was changed
-  # we want to save that information to the @settings hash.
-
-  def on_ApiKeyEntry_changed
-    @api_buffer.text    = (@api_show.text)
-    @settings[:api_key] = @api_buffer.text
-  end
-
-  # When we receive a signal that the quit button was pressed we'll want to
-  # destroy the main window and exit the program in a safe and clean way,
-  # hopefully returning no exceptions or error codes
-
-  def on_ButtonQuit_clicked
-    @main_window.destroy
-    begin
-      exit
-    rescue SystemExit
-      p 'This is a clean exit' # FIXME Change or get rid of this message
-      quit
-    end
-  end
-
-  # Handlers for Preferences window signals
-  # FIXME 'ok' button doesn't save, nor does it close the window
-  def on_PrefsWinButtonOk_clicked
-    @logger.debug('Received click on OK button in preferences window')
-    @logger.debug("Settings state: #{@settings}")
-    begin
-      @logger.debug('Opening file in write mode')
-      File.open('conf/settings.conf', 'w') do |file|
-        @logger.debug('Writing settings file...')
-        file.write @settings.to_yaml
-        @logger.debug('File written')
-      end
-    rescue StandardError => e
-      @logger.error 'I do not have permission to save settings:'
-      @logger.error e.message
-
-    end
-  end
-
-  # When we receive a signal that the end-user clicked the cancel button from
-  # within the preferences window we will hide the preferences window until
-  # program end, or until called again by the user
-
-  def on_PrefsWinButtonCancel_clicked
-    @logger.debug('Received click on cancel button, hiding window')
-    @prefs_window.hide
-    @logger.debug('Preference window hidden')
-  end
-
-  # Main run function
-
-  def run
-    @main_window.show
-    Gtk.main
-  end
-
-  # Main quit function, this is called upon by the quit button and the X button
-  # at the top of the window
-
-  def quit
-    Gtk.main_quit
+command :from do |c|
+  c.syntax = 'ada-wetter from [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::From
   end
 end
 
-# Start a new instance of the Wetter application by calling on the run function
-# above.
-#
-Wetter.new('wetter.ui').run
+command :both do |c|
+  c.syntax = 'ada-wetter both [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Both
+  end
+end
+
+command :the do |c|
+  c.syntax = 'ada-wetter the [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::The
+  end
+end
+
+command :Dark do |c|
+  c.syntax = 'ada-wetter Dark [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Dark
+  end
+end
+
+command :Sky do |c|
+  c.syntax = 'ada-wetter Sky [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Sky
+  end
+end
+
+command :API do |c|
+  c.syntax = 'ada-wetter API [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Api
+  end
+end
+
+command :and do |c|
+  c.syntax = 'ada-wetter and [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::And
+  end
+end
+
+command :sensors do |c|
+  c.syntax = 'ada-wetter sensors [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Sensors
+  end
+end
+
+command :within do |c|
+  c.syntax = 'ada-wetter within [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Within
+  end
+end
+
+command :your do |c|
+  c.syntax = 'ada-wetter your [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Your
+  end
+end
+
+command :home. do |c|
+  c.syntax = 'ada-wetter home. [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada-wetter::Commands::Home.
+  end
+end
+
