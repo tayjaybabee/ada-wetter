@@ -1,41 +1,39 @@
 module Wetter
   module Storage
     class Create
-      private
+      private_class_method :make_paths
 
-        def make_paths(logger)
-          paths = [@conf_path, @stats_path, @stats_backup]
-          logger.debug "The paths we're we're writing are #{paths}"
-          for path in paths
-            logger.debug "Writing #{path}"
-            begin
-              FileUtils.mkpath(path)
-            rescue
-              raise StandardError
-            end
-            logger.debug "Wrote #{path}"
-          end
+      def self.make_paths(logger, paths)
+        for name in paths do
+          | name, path |
+              path = File.join(path)
+          logger.debug "Now writing #{name}"
+          FileUtils.mkpath(path)
+          logger.debug "Finished writing #{name}"
         end
-        
+      end
+
       public
 
       def initialize(logger, root_filepath)
         @logger.debug "Root filepath is #{root_filepath}"
+        paths = [
+            [root_filepath, 'run', 'conf'],
+            [root_filepath, 'run', 'stats'],
+            [root_filepath, 'run', 'stats', 'backups']
+        ]
 
-        conf_path  = [root_filepath, 'run', 'conf']
-        @conf_path = File.join(conf_path)
-        @logger.debug "Path for conf files is: #{@conf_path}"
+        path_names = [
+            'Configuration',
+            'Stats',
+            'Stats backup'
+        ]
 
-        stats_path  = [root_filepath, 'run', 'stats']
-        @stats_path = File.join(stats_path)
-        @logger.debug "Path for stats files is: #{@stats_path}"
+        path_names.map(&:to_sym).zip(paths).to_h
 
-        stats_backup  = [@stats_path, 'backup']
-        @stats_backup = File.join(stats_backup)
-        @logger.debug "Path for stats backups is: #{@stats_backup}"
+        path_hash = path_names.map(&:to_sym).zip(paths).to_h
 
-        @logger.debug 'Writing paths'
-        make_paths(logger)
+        make_paths(logger, path_hash)
       end
     end
   end
