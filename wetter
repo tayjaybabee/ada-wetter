@@ -8,13 +8,13 @@ require 'fileutils'
 require 'optparse'
 # TODO Write out a comp[ete set of required gems to go on the Github for
 #   future end-users and current developers
-require_relative 'prefs.rb'
+require_relative 'prefs/prefs.rb'
+require_relative 'ui/gui.rb'
 
 # wetter is an applet that is meant to serve as part of the ADA system
 # (Artificially-Intelligent Domestic Assistant) prounounced "Ay-Duh"
 
-class Wetter
-  include Wetter::Prefs::Window
+module Wetter
 
   # Create constant representing the Preferences window-builder object
   # for if user clicks
@@ -49,11 +49,12 @@ class Wetter
       write_yaml('conf', temp_settings)
       stat_settings = Prefs::TempStructs.stats
       @logger.debug("Found default stats struct: #{stat_settings}")
-      write_yaml('stats', stat_settings)
       @logger.debug 'Creating stats path'
       FileUtils.mkpath("#{stats_filepath}")
+      write_yaml('stats', stat_settings)
       @logger.debug 'Stats path created!'
       @logger.debug 'Initial conf/stats files created!'
+      load_settings
     else
       @logger.debug 'Skipping file creation, files found!'
 
@@ -63,54 +64,20 @@ class Wetter
 
   def load_settings(filepath = DefaultFilepath)
     settings_filepath = "#{ConfDir}settings.conf"
+    @logger.debug "Settings filepath is: #{settings_filepath}"
     @logger.debug 'Received load_settings call'
     @logger.debug "Searching #{filepath.to_s}"
 
-    if File.exist?(filepath) && File.directory?(filepath)
-      @logger.debug "Determined that #{filepath.to_s} is an existing directory"
-      @logger.debug 'Seeing if settings file exists'
-      if File.exist?(settings_filepath)
-        @logger.debug("Found #{settings_filepath}")
-        @logger.debug('Loading configuration file')
-        @settings = YAML.load_file(settings_filepath)
-        write_yaml('conf', @settings)
-      else
-        @logger.debug("Unable to find #{settings_filepath}, calling creation job")
-        create_yaml(settings_filepath)
-      end
-    else
-      @logger.debug('Could not find paths needed for configuration')
-      unless File.exist?("#{filepath}conf/settings.conf")
-        create_yaml("#{filepath}conf/settings.conf")
-      end
-      unless File.exist?("#{filepath}stats/stats.db")
-        create_yaml("#{filepath}stats/stats.db")
-      end
-      @settings = YAML.load_file("#{filepath}conf/settings.conf")
-    end
-    if File.exist?("#{filepath}/wetter.conf")
-    end
 
     if File.exist?(settings_filepath)
-      temp_settings = YAML.load_file(settings_filepath)
-      if temp_settings.nil?
-
-      end
-      if temp_settings.key?(:api_key)
-        if temp_settings[:api_key].nil?
-          @logger.debug 'API key unset, though it has an entry'
-          @api_buffer.text = 'Not set'
-        else
-          @logger.info "Found API key: #{temp_settings[:api_key]}"
-          @api_buffer.text = temp_settings[:api_key].to_s
-        end
-      else
-        @logger.info 'Unable to find conf path, creating...'
-        create_conf
-      end
-
+      @logger.info 'Found settings file!'
+      settings = YAML.load(File.read(settings_filepath))
+      @logger.debug "Settings state: #{@settings}"
+    else
+      @logger.info("Settings file doesn't exist")
+      @logger.info('Creating new settings file...')
+      create_yaml
     end
-
   end
 
   def write_yaml(file, settings)
@@ -130,37 +97,30 @@ class Wetter
     File.open("#{w_file}", 'w+') { |f| f.write(data.to_yaml) }
   end
 
+  # Here we start the logger
+  # TODO: Move this to it's own class
+
   def start_logger
     @logger       = Logger.new(STDOUT)
     @logger.level = Logger::DEBUG
     @logger.info 'Logger started!'
   end
 
-  def start_builder(glade_path)
-    @builder = Gtk::Builder.new
-    @logger.debug 'Starting UI builder object'
-    @builder.add_from_file(glade_path)
-    @logger.debug 'Setting up connect signals with handlers'
-    @builder.connect_signals { |handler| method (handler) }
-    @logger.debug 'Signals connected!'
-    @logger.debug 'UI builder started!'
-  end
+  # This method builds all the program windows for later access
 
   def build_windows
-    @logger.debug 'Building window objects'
-    @main_window  = @builder.get_object('WetterApplicationWindow')
-    @prefs_window = @builder.get_object('PrefWindow')
-    @logger.debug 'Window objects built'
+    logger  = @logger
+    builder = @builder
+    window  = Wetter::Gui::Builder.build(logger, builder)
+    windows = ['splash', 'main', 'prefs']
+
+    for win in windows
+      @builder.build(logger, builder, "#{win}")
+    end
+
+    logger.debug 'Successfully built all windows'
   end
 
-  def splash_hide
-    @splash.hide
-  end
-
-  #  def show_splash
-  #    @splash = @builder.get_object('splash_window')
-  #    @splash.show
-  #0  end
 
   def initialize(glade_path)
 
@@ -178,7 +138,11 @@ class Wetter
     # preferences window.
 
     @logger.debug 'Starting builder for main application window'
-    start_builder(glade_path)
+    @builder = Gui::Builder
+    @builder = builder.start(glade_path, @logger)
+    @logger.debug 'Setting up connect signals with handlers'
+    @builder.connect_signals { |handler| method (handler) }
+    @logger.debug 'Signals connected!'
     @logger.debug 'Starting builder for preference fields'
     build_pref_fields
 
@@ -186,11 +150,12 @@ class Wetter
     # them the data that is currently saved.
     load_settings
 
-  #  show_splash
-
     # Build the windows needed for the application
     @logger.debug 'Starting build job for windows'
     build_windows
+    #@splash_window.show
+    #sleep(5)
+    #@splash_window.hide
 
   end
 
@@ -225,11 +190,9 @@ class Wetter
                        else
                          'This has not been set'
                        end
-    if @settings[:api_key].nil?
-      ''
-    end
 
     @logger.debug("API Key is: #{@api_buffer.text}")
+    @api_show.show
     @prefs_window.show
     @api_show.text = (@api_buffer.text)
   end
@@ -277,6 +240,7 @@ class Wetter
         @logger.debug('Writing settings file...')
         file.write @settings.to_yaml
         @logger.debug('File written')
+        @prefs_window.hide
       end
     rescue StandardError => e
       @logger.error 'I do not have permission to save settings:'
@@ -298,7 +262,12 @@ class Wetter
   # Main run function
 
   def run
+    #@splash_window.show
+    #sleep(5)
+    #@splash_window.hide
     @main_window.show
+    sleep(5)
+    @splash_window.destroy
     Gtk.main
   end
 
@@ -314,3 +283,4 @@ end
 # above.
 #
 Wetter.new('wetter.ui').run
+
