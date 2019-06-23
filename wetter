@@ -8,8 +8,9 @@ require 'fileutils'
 require 'optparse'
 # TODO Write out a comp[ete set of required gems to go on the Github for
 #   future end-users and current developers
-require_relative 'prefs/prefs.rb'
-require_relative 'ui/gui.rb'
+require_relative 'prefs/prefs'
+require_relative 'ui/gui'
+require_relative 'storage/storage'
 
 # wetter is an applet that is meant to serve as part of the ADA system
 # (Artificially-Intelligent Domestic Assistant) prounounced "Ay-Duh"

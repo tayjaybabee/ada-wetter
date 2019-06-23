@@ -4,14 +4,16 @@ module Wetter
       private_class_method :make_paths
 
       def self.make_paths(logger, paths)
-        for name in paths do
-          | name, path |
-              path = File.join(path)
+        for name in paths { |name, path|
+          path = File.join(path)
+
           logger.debug "Now writing #{name}"
           FileUtils.mkpath(path)
           logger.debug "Finished writing #{name}"
+        }
         end
       end
+
 
       public
 

@@ -49,7 +49,5 @@ class Wetter
       logger.debug 'Building Preferences Window object'
       builder.get_object('wetter_preferences_window')
     end
-
   end
-end
 end
