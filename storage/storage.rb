@@ -2,8 +2,8 @@
 
 require_relative 'lib/create'
 
-module Wetter
-  class Storage
+class Wetter
+  module Storage
 
   end
 end

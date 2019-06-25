@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+﻿#!/usr/bin/env ruby
 # frozen_string_literal: true
 
 require 'gtk3'
@@ -9,114 +9,50 @@ require 'optparse'
 # TODO Write out a comp[ete set of required gems to go on the Github for
 #   future end-users and current developers
 require_relative 'prefs/prefs'
-require_relative 'ui/gui'
+require_relative 'ui/gui/gui'
 require_relative 'storage/storage'
 
 # wetter is an applet that is meant to serve as part of the ADA system
 # (Artificially-Intelligent Domestic Assistant) prounounced "Ay-Duh"
 
-module Wetter
+class Wetter
 
-  # Create constant representing the Preferences window-builder object
-  # for if user clicks
-
-  PrefsWin = Wetter::Prefs::Window.builder
+  @@main_window  = Wetter::Gui::Windows::Main
+  @@prefs_window = Wetter::Gui::Windows::Prefs
 
   # Declare some much needed instance constants
 
   DefaultFilepath = 'application/run/' # Base run dir where both settings.conf
   # and stats.db will have their respective
   # domains.
+  #
   ConfDir  = "#{DefaultFilepath}conf/" # Dir containing settings.conf
   StatsDir = "#{DefaultFilepath}stats/" # Dir containing stats.conf
 
+  signal_handler = Wetter::Gui::Signals
+
+  @button_click = signal_handler::OnButtonClick
+
   # TODO Add argument parsing
-
-  def create_yaml(mkdir = true)
-    @logger.debug 'Received call to make conf file'
-
-    stats_filepath = StatsDir
-    conf_filepath  = ConfDir
-    if mkdir
-
-      @logger.debug 'Making conf directory'
-      FileUtils.mkpath(conf_filepath)
-      @logger.debug 'Conf path created'
-
-      @logger.debug 'Creating conf file'
-      @logger.debug 'Fetching default settings struct'
-      temp_settings = Prefs::TempStructs.settings
-      @logger.debug "Found default settings struct: #{temp_settings}"
-      write_yaml('conf', temp_settings)
-      stat_settings = Prefs::TempStructs.stats
-      @logger.debug("Found default stats struct: #{stat_settings}")
-      @logger.debug 'Creating stats path'
-      FileUtils.mkpath("#{stats_filepath}")
-      write_yaml('stats', stat_settings)
-      @logger.debug 'Stats path created!'
-      @logger.debug 'Initial conf/stats files created!'
-      load_settings
-    else
-      @logger.debug 'Skipping file creation, files found!'
-
-    end
-
-  end
-
-  def load_settings(filepath = DefaultFilepath)
-    settings_filepath = "#{ConfDir}settings.conf"
-    @logger.debug "Settings filepath is: #{settings_filepath}"
-    @logger.debug 'Received load_settings call'
-    @logger.debug "Searching #{filepath.to_s}"
-
-
-    if File.exist?(settings_filepath)
-      @logger.info 'Found settings file!'
-      settings = YAML.load(File.read(settings_filepath))
-      @logger.debug "Settings state: #{@settings}"
-    else
-      @logger.info("Settings file doesn't exist")
-      @logger.info('Creating new settings file...')
-      create_yaml
-    end
-  end
-
-  def write_yaml(file, settings)
-    @logger.debug 'YAML writer received call to write'
-    case file
-
-    when 'conf'
-      @logger.debug 'Saving configuration file'
-      w_file = "#{ConfDir}settings.conf"
-      data   = settings
-
-    when 'stats'
-      @logger.debug 'Saving stats file'
-      w_file = "#{StatsDir}stats.db"
-      data   = settings
-    end
-    File.open("#{w_file}", 'w+') { |f| f.write(data.to_yaml) }
-  end
 
   # Here we start the logger
   # TODO: Move this to it's own class
 
   def start_logger
-    @logger       = Logger.new(STDOUT)
-    @logger.level = Logger::DEBUG
-    @logger.info 'Logger started!'
+    @@logger       = Logger.new(STDOUT)
+    @@logger.level = Logger::DEBUG
+    @@logger.info 'Logger started!'
   end
 
   # This method builds all the program windows for later access
 
   def build_windows
-    logger  = @logger
-    builder = @builder
-    window  = Wetter::Gui::Builder.build(logger, builder)
-    windows = ['splash', 'main', 'prefs']
+    assembler = Wetter::Gui::Builder
+    logger    = @@logger
+    windows   = ['splash', 'main', 'prefs']
 
     for win in windows
-      @builder.build(logger, builder, "#{win}")
+      assembler.build(logger, "#{win}")
     end
 
     logger.debug 'Successfully built all windows'
@@ -133,18 +69,19 @@ module Wetter
 
     # Now we can tell the user that we're starting start jobs
 
-    @logger.debug 'Running start jobs'
+    @@logger.debug 'Running start jobs'
 
     # Starting the builders for the main window and for the
     # preferences window.
 
-    @logger.debug 'Starting builder for main application window'
-    @builder = Gui::Builder
-    @builder = builder.start(glade_path, @logger)
-    @logger.debug 'Setting up connect signals with handlers'
-    @builder.connect_signals { |handler| method (handler) }
-    @logger.debug 'Signals connected!'
-    @logger.debug 'Starting builder for preference fields'
+    @@logger.debug 'Starting builder for main application window'
+
+    # FIXME: The below is a temporary fix in order to restore
+    #   functionality to app for testing. Should change to
+    #   something with less code
+    @@logger.debug 'Setting up connect signals with handlers'
+    @@logger.debug 'Signals connected!'
+    @@logger.debug 'Starting builder for preference fields'
     build_pref_fields
 
     # Now that the preference fields exist for filling we'll give
@@ -152,7 +89,7 @@ module Wetter
     load_settings
 
     # Build the windows needed for the application
-    @logger.debug 'Starting build job for windows'
+    @@logger.debug 'Starting build job for windows'
     build_windows
     #@splash_window.show
     #sleep(5)
@@ -164,10 +101,10 @@ module Wetter
   # the preferences window so they can be filled with data from the conf
   # files (if they exist)
   def build_pref_fields
-    @logger.debug 'Building Preference Fields'
+    @@logger.debug 'Building Preference Fields'
     @api_buffer = @builder.get_object 'ApiKeyEntryBuffer'
     @api_show   = @builder.get_object 'ApiKeyEntry'
-    @logger.debug 'Built API preference fields'
+    @@logger.debug 'Built API preference fields'
   end
 
   # This function will be removed/commented out soon, it just exists in
@@ -181,10 +118,12 @@ module Wetter
 
   # When we receive a signal that the end-user clicked the preferences button
   # we will create and show the preferences window
-  def on_ButtonPrefs_clicked
-    @logger.debug 'Received click on Preferences button'
-    @logger.debug "Current program settings are: #{@settings}"
-    @logger.debug 'Calling on preference field builder'
+  def on_main_button_prefs_clicked
+    @@logger.debug 'Received click on Preferences button'
+
+
+    @@logger.debug "Current program settings are: #{@settings}"
+    @@logger.debug 'Calling on preference field builder'
     build_pref_fields
     @api_buffer.text = if !@settings[:api_key].nil?
                          @settings[:api_key]
@@ -192,7 +131,7 @@ module Wetter
                          'This has not been set'
                        end
 
-    @logger.debug("API Key is: #{@api_buffer.text}")
+    @@logger.debug("API Key is: #{@api_buffer.text}")
     @api_show.show
     @prefs_window.show
     @api_show.text = (@api_buffer.text)
@@ -204,14 +143,14 @@ module Wetter
 
   # TODO Provide function to the refresh button
 
-  def on_ButtonRefresh_clicked
+  def on_main_button_refresh_clicked
     not_yet_implemented
   end
 
   # When we receive a signal that the API Key text entry field was changed
   # we want to save that information to the @settings hash.
 
-  def on_ApiKeyEntry_changed
+  def on_prefs_entry_api_key_changed
     @api_buffer.text    = (@api_show.text)
     @settings[:api_key] = @api_buffer.text
   end
@@ -220,7 +159,7 @@ module Wetter
   # destroy the main window and exit the program in a safe and clean way,
   # hopefully returning no exceptions or error codes
 
-  def on_ButtonQuit_clicked
+  def on_main_button_quit_clicked
     @main_window.destroy
     begin
       exit
@@ -232,20 +171,20 @@ module Wetter
 
   # Handlers for Preferences window signals
   # FIXME 'ok' button doesn't save, nor does it close the window
-  def on_PrefsWinButtonOk_clicked
-    @logger.debug('Received click on OK button in preferences window')
-    @logger.debug("Settings state: #{@settings}")
+  def on_prefs_win_main_bb_ok_clicked
+    @@logger.debug('Received click on OK button in preferences window')
+    @@logger.debug("Settings state: #{@settings}")
     begin
-      @logger.debug('Opening file in write mode')
+      @@logger.debug('Opening file in write mode')
       File.open('conf/settings.conf', 'w') do |file|
-        @logger.debug('Writing settings file...')
+        @@logger.debug('Writing settings file...')
         file.write @settings.to_yaml
-        @logger.debug('File written')
+        @@logger.debug('File written')
         @prefs_window.hide
       end
     rescue StandardError => e
-      @logger.error 'I do not have permission to save settings:'
-      @logger.error e.message
+      @@logger.error 'I do not have permission to save settings:'
+      @@logger.error e.message
 
     end
   end
@@ -254,19 +193,20 @@ module Wetter
   # within the preferences window we will hide the preferences window until
   # program end, or until called again by the user
 
-  def on_PrefsWinButtonCancel_clicked
-    @logger.debug('Received click on cancel button, hiding window')
+  def on_prefs_win_main_bb_cancel_clicked
+    @@logger.debug('Received click on cancel button, hiding window')
     @prefs_window.hide
-    @logger.debug('Preference window hidden')
+    @@logger.debug('Preference window hidden')
   end
 
   # Main run function
 
   def run
+    extend Wetter::Gui
     #@splash_window.show
     #sleep(5)
     #@splash_window.hide
-    @main_window.show
+    @@main_window.show
     sleep(5)
     @splash_window.destroy
     Gtk.main

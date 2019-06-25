@@ -1,9 +1,8 @@
-module Wetter
+class Wetter
   module Storage
     class Create
-      private_class_method :make_paths
 
-      def self.make_paths(logger, paths)
+      def make_paths(logger, paths)
         for name in paths { |name, path|
           path = File.join(path)
 
@@ -13,9 +12,6 @@ module Wetter
         }
         end
       end
-
-
-      public
 
       def initialize(logger, root_filepath)
         @logger.debug "Root filepath is #{root_filepath}"

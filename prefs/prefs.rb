@@ -2,7 +2,7 @@ require_relative 'modules/assemble'
 require_relative 'modules/window'
 
 class Wetter
-  class Prefs
+  module Prefs
 
   end
 end

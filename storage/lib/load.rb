@@ -1,4 +1,4 @@
-module Wetter
+class Wetter
   module Storage
     class Load
 

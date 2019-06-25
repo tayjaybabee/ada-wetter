@@ -1,7 +1,7 @@
 class Wetter
-  class Prefs
+  module Prefs
 
-    module Assemble
+    class Assemble
 
     end
 

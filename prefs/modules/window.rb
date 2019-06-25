@@ -1,9 +1,9 @@
 class Wetter
-  class Prefs
+  module Prefs
     class Window
 
-      def self.builder
-        puts 'You have successfully accessed me0'
+      def self.builder(logger, window)
+        puts 'You have successfully accessed me'
       end
 
     end
