@@ -1,17 +1,17 @@
 class Wetter
   module Gui
-    class Windows
+    module Windows
       module Main
 
-        def create(logger)
+        def self.create
           @main_window = @builder.get_object('wetter_application_window')
         end
 
-        def show
+        def self.show
           @main_window.show
         end
 
-        def hide
+        def self.hide
           @main_window.hide
         end
       end

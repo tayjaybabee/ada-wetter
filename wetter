@@ -2,7 +2,7 @@
 # frozen_string_literal: true
 
 require 'gtk3'
-require 'logger'
+require 'easy_logging'
 require 'yaml'
 require 'fileutils'
 require 'optparse'
@@ -15,10 +15,34 @@ require_relative 'storage/storage'
 # wetter is an applet that is meant to serve as part of the ADA system
 # (Artificially-Intelligent Domestic Assistant) prounounced "Ay-Duh"
 
-class Wetter
+EasyLogging.level = Logger::DEBUG
 
-  @@main_window  = Wetter::Gui::Windows::Main
-  @@prefs_window = Wetter::Gui::Windows::Prefs
+class Wetter
+  include EasyLogging
+  include Wetter::Prefs
+  include Wetter::Gui
+  include Gtk
+
+  Builder = Wetter::Gui::Builder
+  MainWin = Wetter::Gui::Windows::Main
+  PrefsWin = Wetter::Gui::Windows::Prefs
+
+
+  def start_builder(glade_path)
+
+    logger.debug 'Starting Gui object builder'
+    Builder.start(glade_path)
+    logger.debug 'Started GUI object builder!'
+  
+  end
+
+  def load_settings
+
+    logger.debug 'Received call to load settings'
+    logger.debug 'Calling on Prefs.loaded'
+    @settings = Prefs.configure
+
+  end
 
   # Declare some much needed instance constants
 
@@ -33,26 +57,13 @@ class Wetter
 
   @button_click = signal_handler::OnButtonClick
 
-  # TODO Add argument parsing
-
-  # Here we start the logger
-  # TODO: Move this to it's own class
-
-  def start_logger
-    @@logger       = Logger.new(STDOUT)
-    @@logger.level = Logger::DEBUG
-    @@logger.info 'Logger started!'
-  end
-
   # This method builds all the program windows for later access
 
   def build_windows
-    assembler = Wetter::Gui::Builder
-    logger    = @@logger
-    windows   = ['splash', 'main', 'prefs']
+    windows = ['splash', 'main', 'prefs']
 
     for win in windows
-      assembler.build(logger, "#{win}")
+      Builder.build("#{win}")
     end
 
     logger.debug 'Successfully built all windows'
@@ -61,27 +72,22 @@ class Wetter
 
   def initialize(glade_path)
 
-    # Run start-up jobs
-    # First we start the logger
-    # TODO Add switches for setting the logging level via command line
-    #  and maybe even via the preferences window
-    start_logger
-
     # Now we can tell the user that we're starting start jobs
 
-    @@logger.debug 'Running start jobs'
+    logger.debug 'Running start jobs'
 
     # Starting the builders for the main window and for the
     # preferences window.
 
-    @@logger.debug 'Starting builder for main application window'
+    logger.debug 'Starting GUI builder...'
+    start_builder(glade_path)
 
     # FIXME: The below is a temporary fix in order to restore
     #   functionality to app for testing. Should change to
     #   something with less code
-    @@logger.debug 'Setting up connect signals with handlers'
-    @@logger.debug 'Signals connected!'
-    @@logger.debug 'Starting builder for preference fields'
+    logger.debug 'Setting up connect signals with handlers'
+    logger.debug 'Signals connected!'
+    logger.debug 'Starting builder for preference fields'
     build_pref_fields
 
     # Now that the preference fields exist for filling we'll give
@@ -89,11 +95,8 @@ class Wetter
     load_settings
 
     # Build the windows needed for the application
-    @@logger.debug 'Starting build job for windows'
+    logger.debug 'Starting build job for windows'
     build_windows
-    #@splash_window.show
-    #sleep(5)
-    #@splash_window.hide
 
   end
 
@@ -101,10 +104,10 @@ class Wetter
   # the preferences window so they can be filled with data from the conf
   # files (if they exist)
   def build_pref_fields
-    @@logger.debug 'Building Preference Fields'
-    @api_buffer = @builder.get_object 'ApiKeyEntryBuffer'
-    @api_show   = @builder.get_object 'ApiKeyEntry'
-    @@logger.debug 'Built API preference fields'
+    logger.debug 'Building Preference Fields'
+    @api_buffer = Builder.get_object 'ApiKeyEntryBuffer'
+    @api_show   = Builder.get_object 'ApiKeyEntry'
+    logger.debug 'Built API preference fields'
   end
 
   # This function will be removed/commented out soon, it just exists in
@@ -119,11 +122,11 @@ class Wetter
   # When we receive a signal that the end-user clicked the preferences button
   # we will create and show the preferences window
   def on_main_button_prefs_clicked
-    @@logger.debug 'Received click on Preferences button'
+    logger.debug 'Received click on Preferences button'
 
 
-    @@logger.debug "Current program settings are: #{@settings}"
-    @@logger.debug 'Calling on preference field builder'
+    logger.debug "Current program settings are: #{@settings}"
+    logger.debug 'Calling on preference field builder'
     build_pref_fields
     @api_buffer.text = if !@settings[:api_key].nil?
                          @settings[:api_key]
@@ -131,7 +134,7 @@ class Wetter
                          'This has not been set'
                        end
 
-    @@logger.debug("API Key is: #{@api_buffer.text}")
+    logger.debug("API Key is: #{@api_buffer.text}")
     @api_show.show
     @prefs_window.show
     @api_show.text = (@api_buffer.text)
@@ -172,19 +175,19 @@ class Wetter
   # Handlers for Preferences window signals
   # FIXME 'ok' button doesn't save, nor does it close the window
   def on_prefs_win_main_bb_ok_clicked
-    @@logger.debug('Received click on OK button in preferences window')
-    @@logger.debug("Settings state: #{@settings}")
+    logger.debug('Received click on OK button in preferences window')
+    logger.debug("Settings state: #{@settings}")
     begin
-      @@logger.debug('Opening file in write mode')
+      logger.debug('Opening file in write mode')
       File.open('conf/settings.conf', 'w') do |file|
-        @@logger.debug('Writing settings file...')
+        logger.debug('Writing settings file...')
         file.write @settings.to_yaml
-        @@logger.debug('File written')
+        logger.debug('File written')
         @prefs_window.hide
       end
     rescue StandardError => e
-      @@logger.error 'I do not have permission to save settings:'
-      @@logger.error e.message
+      logger.error 'I do not have permission to save settings:'
+      logger.error e.message
 
     end
   end
@@ -194,18 +197,14 @@ class Wetter
   # program end, or until called again by the user
 
   def on_prefs_win_main_bb_cancel_clicked
-    @@logger.debug('Received click on cancel button, hiding window')
+    logger.debug('Received click on cancel button, hiding window')
     @prefs_window.hide
-    @@logger.debug('Preference window hidden')
+    logger.debug('Preference window hidden')
   end
 
   # Main run function
 
   def run
-    extend Wetter::Gui
-    #@splash_window.show
-    #sleep(5)
-    #@splash_window.hide
     @@main_window.show
     sleep(5)
     @splash_window.destroy

@@ -1,11 +1,22 @@
+require 'easy_logging'
+require 'gtk3'
+
 class Wetter
   module Gui
-    class Builder
+    module Builder
+      include EasyLogging
+      include Gtk
 
       # TODO: Rename to start
-      def self.start(glade_path, logger)
+      def self.start(glade_path)
         logger.debug 'Starting UI builder object'
         @@builder = Gtk::Builder.new
+      end
+
+      def self.get_object(object)
+
+        @@builder.get_object(object)
+
       end
 
       def self.register(code, name, window)
@@ -23,7 +34,7 @@ class Wetter
         end
       end
 
-      def self.build(logger, target)
+      def self.build(target)
 
         case target
 
