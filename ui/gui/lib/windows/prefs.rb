@@ -1,6 +1,6 @@
 class Wetter
-  module Gui
-    class Windows
+  class Gui
+    module Windows
 
       module Prefs
 

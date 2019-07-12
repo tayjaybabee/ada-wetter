@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'commander'
+
+class MyApplication
+  include Commander::Methods
+  # include whatever modules you need
+
+  def run
+    program :name, 'ada_wetter'
+    program :version, '0.0.1'
+    program :description, 'ada_wetter'
+
+    command :install do |c|
+      c.syntax = 'ada_wetter install [options]'
+      c.summary = ''
+      c.description = ''
+      c.example 'description', 'command example'
+      c.option '--some-switch', 'Some switch that does something'
+      c.action do |args, options|
+        # Do something or c.when_called Ada_wetter::Commands::Install
+      end
+    end
+
+    command :test do |c|
+      c.syntax = 'ada_wetter test [options]'
+      c.summary = ''
+      c.description = ''
+      c.example 'description', 'command example'
+      c.option '--some-switch', 'Some switch that does something'
+      c.action do |args, options|
+        # Do something or c.when_called Ada_wetter::Commands::Test
+      end
+    end
+
+    run!
+  end
+end
+
+MyApplication.new.run if $0 == __FILE__

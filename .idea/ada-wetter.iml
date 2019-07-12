@@ -4,9 +4,22 @@
     <shared />
   </component>
   <component name="NewModuleRootManager">
-    <content url="file://$MODULE_DIR$/../ada-wetter" />
+    <content url="file://$MODULE_DIR$" />
     <orderEntry type="jdk" jdkName="RVM: ruby-2.5.5" jdkType="RUBY_SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" scope="PROVIDED" name="atk (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
     <orderEntry type="library" scope="PROVIDED" name="bundler (v2.0.1, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="cairo (v1.16.4, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="cairo-gobject (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="easy_logging (v0.4.0, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="gdk3 (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="gdk_pixbuf2 (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="gio2 (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="glib2 (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="gobject-introspection (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="gtk3 (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="native-package-installer (v1.0.7, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="pango (v3.3.6, RVM: ruby-2.5.5) [gem]" level="application" />
+    <orderEntry type="library" scope="PROVIDED" name="pkg-config (v1.3.7, RVM: ruby-2.5.5) [gem]" level="application" />
   </component>
 </module>

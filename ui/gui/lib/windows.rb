@@ -1,11 +1,14 @@
-require_relative 'windows/main'
+require_relative 'windows/main_win'
 require_relative 'windows/prefs'
+require_relative 'manifest'
 
 class Wetter
-  module Gui
-    class Windows
+  class Gui
+    module Windows
 
-      @builder = Gtk::Builder.new
+      def self.main
+
+      end
 
     end
   end

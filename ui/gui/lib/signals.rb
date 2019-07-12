@@ -1,5 +1,5 @@
 class Wetter
-  module Gui
+  class Gui
     module Signals
 
       module OnButtonClick
