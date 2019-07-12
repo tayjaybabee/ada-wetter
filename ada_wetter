@@ -1,0 +1,75 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'commander/import'
+require 'easy_logging'
+require_relative 'configure/configure'
+
+
+class << self
+  include Configure
+end
+
+program :name, 'ada_wetter'
+program :version, '0.0.1'
+program :description, 'An applet for the Wetter module of the AIDA system'
+#program :help_formatter, :compact
+
+global_option '-v', '--verbose', 'Provides (sometimes) useful data when program fails'
+global_option '-c', '--config FILE', 'Give ada_wetter the location of an previously-made conf file'
+default_command :configure
+
+command :configure do |c|
+  c.syntax = 'ada_wetter configure [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '-O', '--override_port PORTNUM', Integer, 'Override the default port ada_wetter seeks to connect to'
+  c.option '--api-key STRING', String, 'Provides an API key for ada_wetter to use to fetch weather'
+  c.option '--geocode STRING', String, 'Provides location data for ada_wetter to use to fetch weather'
+  c.option '-sh', '--shell', 'Start a shell for configuration'
+  c.action do |args, options|
+    say 'foo' if options.verbose
+    say 'Checking options as provided'
+
+    if options.shell
+      Configure::Shell.new
+    end
+
+  end
+
+end
+
+command :gui do |c|
+  c.syntax = 'ada_wetter gui [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada_wetter::Commands::Gui
+  end
+end
+
+command :cli do |c|
+  c.syntax = 'ada_wetter cli [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada_wetter::Commands::Cli
+  end
+end
+
+command :install do |c|
+  c.syntax = 'ada_wetter install [options]'
+  c.summary = ''
+  c.description = ''
+  c.example 'description', 'command example'
+  c.option '--some-switch', 'Some switch that does something'
+  c.action do |args, options|
+    # Do something or c.when_called Ada_wetter::Commands::Install
+  end
+end
+
